@@ -32,6 +32,12 @@ flowchart LR
     H --> I["Absolute depth output"]
 ```
 
+### 2.3 实验效果对比（定量快照）
+
+![Experimental Comparison Summary](artifacts/experiments/experimental_comparison_summary.png)
+
+说明：该图展示当前 checkpoint 在 `cam19/cam20` 上的 MSE 对比，以及标签拟合残差与训练最优验证损失摘要。
+
 ## 3. 核心目录
 
 ```text
