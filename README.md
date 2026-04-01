@@ -1,153 +1,132 @@
-<div align="center">
-<h1>Video Depth Anything</h1>
-  
-[**Sili Chen**](https://github.com/SiliChen321) · [**Hengkai Guo**](https://guohengkai.github.io/)<sup>&dagger;</sup> · [**Shengnan Zhu**](https://github.com/Shengnan-Zhu)  · [**Feihu Zhang**](https://github.com/zhizunhu)
-<br>
-[**Zilong Huang**](http://speedinghzl.github.io/)   ·  [**Jiashi Feng**](https://scholar.google.com.sg/citations?user=Q8iay0gAAAAJ&hl=en)   ·  [**Bingyi Kang**](https://bingykang.github.io/)<sup>&dagger;</sup> 
-<br>
-ByteDance
-<br>
-&dagger;Corresponding author
+# Video_Depth
 
-<a href="https://arxiv.org/abs/2501.12375"><img src='https://img.shields.io/badge/arXiv-Video Depth Anything-red' alt='Paper PDF'></a>
-<a href='https://videodepthanything.github.io'><img src='https://img.shields.io/badge/Project_Page-Video Depth Anything-green' alt='Project Page'></a>
-<a href='https://huggingface.co/spaces/depth-anything/Video-Depth-Anything'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Demo-blue'></a>
-</div>
+基于 Video Depth Anything (VDA) 的绝对深度蒸馏工程。  
+该仓库将原始“视频相对深度”能力改造为“单图输入 + 物理尺度输出”的流程，用于稳定地生成绝对深度结果并支持时序对比分析。
 
-</div>
+## 1. 项目目标
 
-This work presents **Video Depth Anything** based on [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2), which can be applied to arbitrarily long videos without compromising quality, consistency, or generalization ability. Compared with other diffusion-based models, it enjoys faster inference speed, fewer parameters, and higher consistent depth accuracy.
+- 保留 VDA 的边缘与相对几何表征能力。
+- 使用 Depth Pro 作为绝对深度教师信号。
+- 通过轻量 `Scale MLP Head` 预测每帧尺度参数。
+- 当前映射采用倒数后线性仿射：
+  `D_abs = s * (1 / max(D_vda, eps)) + t`
 
-![teaser](assets/teaser_video_v2.png)
+## 2. 核心目录
 
-## News
-- **2025-07-03:** 🚀🚀🚀 Release an experimental version of training-free **streaming video depth estimation**.
-- **2025-07-03:** Release our implementation of [training loss](https://github.com/DepthAnything/Video-Depth-Anything/tree/main/loss).
-- **2025-04-25:** 🌟🌟🌟 Release [metric depth model](https://github.com/DepthAnything/Video-Depth-Anything/tree/main/metric_depth) based on Video-Depth-Anything-Large.
-- **2025-04-05:** Our paper has been accepted for a **highlight** presentation at [CVPR 2025](https://cvpr.thecvf.com/) (13.5% of the accepted papers).
-- **2025-03-11:** Add full dataset inference and evaluation [scripts](https://github.com/DepthAnything/Video-Depth-Anything/tree/main/benchmark).
-- **2025-02-08:** Enable autocast inference. Support grayscale video, NPZ and EXR output formats.
-- **2025-01-21:** Paper, project page, code, models, and demo are all released.
+```text
+Video_Depth/
+├── VDA_Absolute_Distillation/
+│   ├── configs/distill_config.yaml
+│   ├── data_prep/
+│   ├── core_engine/
+│   ├── models/
+│   └── inference_abs_vda.py
+├── scripts/
+│   ├── make_strategy_compare_4cols_shared_scale.py
+│   ├── make_temporal_compare_video.py
+│   └── draw_vda_kd_architecture_paper_simple.py
+├── docs/
+│   ├── Agent_VDA_Absolute_Distillation-CN.md
+│   ├── vda_pipeline.md
+│   ├── depth_pro_pipeline.md
+│   └── output_inventory.md
+└── artifacts/
+    └── architecture/vda_kd_architecture_paper_simple_clean.png
+```
 
+## 3. 环境依赖
 
-## Release Notes
-- **2025-02-08:** 🚀🚀🚀 Inference speed and memory usage improvement
-  <table>
-    <thead>
-      <tr>
-        <th rowspan="2" style="text-align: center;">Model</th>
-        <th colspan="2">Latency (ms)</th>
-        <th colspan="2">GPU VRAM (GB)</th>
-      </tr>
-      <tr>
-        <th>FP32</th>
-        <th>FP16</th>
-        <th>FP32</th>
-        <th>FP16</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Video-Depth-Anything-V2-Small</td>
-        <td>9.1</td>
-        <td><strong>7.5</strong></td>
-        <td>7.3</td>
-        <td><strong>6.8</strong></td>
-      </tr>
-      <tr>
-        <td>Video-Depth-Anything-V2-Large</td>
-        <td>67</td>
-        <td><strong>14</strong></td>
-        <td>26.7</td>
-        <td><strong>23.6</strong></td>
-    </tbody>
-  </table>
+推荐在 Linux + CUDA 环境运行，核心依赖：
 
-  The Latency and GPU VRAM results are obtained on a single A100 GPU with input of shape 1 x 32 x 518 × 518.
+- `python >= 3.10`
+- `torch`
+- `opencv-python`
+- `numpy`
+- `pyyaml`
+- `matplotlib`
 
-## Pre-trained Models
-We provide **two models** of varying scales for robust and consistent video depth estimation:
+并确保配置中的外部路径可用（VDA 原仓库、Depth Pro 仓库、数据集路径、权重路径）。
 
-| Model | Params | Checkpoint |
-|:-|-:|:-:|
-| Video-Depth-Anything-V2-Small | 28.4M | [Download](https://huggingface.co/depth-anything/Video-Depth-Anything-Small/resolve/main/video_depth_anything_vits.pth?download=true) |
-| Video-Depth-Anything-V2-Large | 381.8M | [Download](https://huggingface.co/depth-anything/Video-Depth-Anything-Large/resolve/main/video_depth_anything_vitl.pth?download=true) |
-| Video-Depth-Anything-V2-Large-Metric | 381.8M | [Download](https://huggingface.co/depth-anything/Metric-Video-Depth-Anything-Large/resolve/main/metric_video_depth_anything_vitl.pth) |
+## 4. 快速开始
 
-
-## Usage
-
-### Preparation
+进入核心工程目录：
 
 ```bash
-git clone https://github.com/DepthAnything/Video-Depth-Anything
-cd Video-Depth-Anything
-pip install -r requirements.txt
+cd VDA_Absolute_Distillation
 ```
 
-Download the checkpoints listed [here](#pre-trained-models) and put them under the `checkpoints` directory.
+### 4.1 对齐分辨率（可选预处理）
+
 ```bash
-bash get_weights.sh
+python data_prep/01_spatial_align.py \
+  --config configs/distill_config.yaml
 ```
 
-### Inference a video
+### 4.2 提取离线尺度标签 `(s*, t*)`
+
 ```bash
-python3 run.py --input_video ./assets/example_videos/davis_rollercoaster.mp4 --output_dir ./outputs --encoder vitl
+python data_prep/02_extract_scale_labels.py \
+  --config configs/distill_config.yaml \
+  --plot
 ```
 
-Options:
-- `--input_video`: path of input video
-- `--output_dir`: path to save the output results
-- `--input_size` (optional): By default, we use input size `518` for model inference.
-- `--max_res` (optional): By default, we use maximum resolution `1280` for model inference.
-- `--encoder` (optional): `vits` for Video-Depth-Anything-V2-Small, `vitl` for Video-Depth-Anything-V2-Large.
-- `--max_len` (optional): maximum length of the input video, `-1` means no limit
-- `--target_fps` (optional): target fps of the input video, `-1` means the original fps
-- `--fp32` (optional): Use `fp32` precision for inference. By default, we use `fp16`.
-- `--grayscale` (optional): Save the grayscale depth map, without applying color palette.
-- `--save_npz` (optional): Save the depth map in `npz` format.
-- `--save_exr` (optional): Save the depth map in `exr` format.
+### 4.3 训练尺度头（冻结 VDA 主干）
 
-### Inference a video using streaming mode (Experimental features)
-We implement an experimental streaming mode **without training**. In details, we save the hidden states of temporal attentions for each frames in the caches, and only send a single frame into our video depth model during inference by reusing these past hidden states in temporal attentions. We hack our pipeline to align the original inference setting in the offline mode. Due to the inevitable gap between training and testing, we observe a **performance drop** between the streaming model and the offline model (e.g. the `d1` of ScanNet drops from `0.926` to `0.836`). Finetuning the model in the streaming mode will greatly improve the performance. We leave it for future work.
-
-To run the streaming model:
 ```bash
-python3 run_streaming.py --input_video ./assets/example_videos/davis_rollercoaster.mp4 --output_dir ./outputs_streaming --encoder vitl
-```
-Options:
-- `--input_video`: path of input video
-- `--output_dir`: path to save the output results
-- `--input_size` (optional): By default, we use input size `518` for model inference.
-- `--max_res` (optional): By default, we use maximum resolution `1280` for model inference.
-- `--encoder` (optional): `vits` for Video-Depth-Anything-V2-Small, `vitl` for Video-Depth-Anything-V2-Large.
-- `--max_len` (optional): maximum length of the input video, `-1` means no limit
-- `--target_fps` (optional): target fps of the input video, `-1` means the original fps
-- `--fp32` (optional): Use `fp32` precision for inference. By default, we use `fp16`.
-- `--grayscale` (optional): Save the grayscale depth map, without applying color palette.
-
-## Training Loss
-Our training loss is in `loss/` directory. Please see the `loss/test_loss.py` for usage.
-
-## Fine-tuning to a metric-depth video model
-Please refer to [Metric Depth](./metric_depth/README.md).
-
-## Benchmark
-Please refer to [Benchmark](./benchmark/README.md).
-
-## Citation
-
-If you find this project useful, please consider citing:
-
-```bibtex
-@article{video_depth_anything,
-  title={Video Depth Anything: Consistent Depth Estimation for Super-Long Videos},
-  author={Chen, Sili and Guo, Hengkai and Zhu, Shengnan and Zhang, Feihu and Huang, Zilong and Feng, Jiashi and Kang, Bingyi}
-  journal={arXiv:2501.12375},
-  year={2025}
-}
+python core_engine/train_distill.py \
+  --config configs/distill_config.yaml \
+  --run-name run_cam00_01_04_05_19_20
 ```
 
+### 4.4 单图/目录推理绝对深度
 
-## LICENSE
-Video-Depth-Anything-Small model is under the Apache-2.0 license. Video-Depth-Anything-Large model is under the CC-BY-NC-4.0 license. For business cooperation, please send an email to Hengkai Guo at guohengkaighk@gmail.com.
+```bash
+python inference_abs_vda.py \
+  --config configs/distill_config.yaml \
+  --checkpoint /media/a1/16THDD/YJY/VDA_Absolute_Distillation/runs/run_cam00_01_04_05_19_20/best.pt \
+  --input /media/a1/16THDD/XZB/DyNeRF/coffee_martini/images/cam00 \
+  --output-dir /media/a1/16THDD/YJY/VDA_Absolute_Distillation/infer/cam00_abs
+```
+
+输出包括：
+
+- `*.npy`：绝对深度数组
+- `*.jpg`：可视化图
+- `metadata.json`：每帧 `scale/shift` 与路径信息
+
+## 5. 对比与时序可视化
+
+仓库 `scripts/` 提供：
+
+- 四列静态对比图（RGB / Depth-Pro / VDA 倒数 / 多场景模型输出）
+- 时序视频生成（用于观察帧间稳定性）
+- 架构图绘制（论文风格简化版）
+
+示例（时序视频）：
+
+```bash
+python scripts/make_temporal_compare_video.py \
+  --rgb-dir /path/to/images/cam00 \
+  --depth-pro-dir /path/to/raw_depth_pro_depth/cam00 \
+  --vda-dir /path/to/raw_vda_depth/cam00 \
+  --pred-dir /path/to/abs_pred/cam00 \
+  --output-video /path/to/out/compare_cam00.mp4 \
+  --output-metrics /path/to/out/compare_cam00_metrics.json
+```
+
+## 6. 关键约束
+
+- 默认只使用白名单相机目录；`cam02` 为空目录，应显式跳过。
+- VDA 与 Depth-Pro 分辨率不一致时，需先做空间对齐或在流程中插值对齐。
+- 单图改造后仍需满足 `ensure_multiple_of=14` 的 patch 约束。
+- 训练阶段冻结 VDA 主干与解码器，仅更新 `Scale MLP Head`。
+
+## 7. 文档索引
+
+- 项目规则与边界：`VDA_Absolute_Distillation/PROJECT_CHARTER_AND_GUIDELINES.md`
+- 技术状态记录：`VDA_Absolute_Distillation/TECHNICAL_STATUS_2026-03-25.md`
+- 总结报告（中文）：`docs/Agent_VDA_Absolute_Distillation-CN.md`
+
+## 8. 许可证
+
+本仓库沿用 `LICENSE` 中的许可条款；如使用第三方模型与权重，请同时遵循其原始许可证。

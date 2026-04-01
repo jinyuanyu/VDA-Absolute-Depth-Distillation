@@ -1,7 +1,65 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
 .vscode/
-outputs
-checkpoints
-__pycache__
-*/__pycache__
-*.pyc
-gradio*
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Model checkpoints / weights
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+*.safetensors
+
+# Large media / archives
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.zip
+*.tar
+*.gz
+
+# Numpy / outputs
+*.npy
+*.npz
+
+# Project-generated artifacts (safe to regenerate)
+artifacts/strategy_compare/
+artifacts/temporal_compare/
+outputs/
+runs/
+cache/
+labels/
+
+# Optional local data links
+data/
+datasets/

@@ -1,0 +1,72 @@
+project:
+  name: VDA_Absolute_Distillation
+  seed: 42
+
+paths:
+  yjy_root: /media/a1/16THDD/YJY
+  images_root: /media/a1/16THDD/XZB/DyNeRF/coffee_martini/images
+  depth_pro_root: /media/a1/16THDD/XZB/DyNeRF/coffee_martini/raw_depth_pro_depth
+  vda_root: /media/a1/16THDD/XZB/DyNeRF/coffee_martini/raw_vda_depth
+  aligned_vda_root: /media/a1/16THDD/YJY/VDA_Absolute_Distillation/cache/aligned_vda_to_depth_pro
+  labels_json: /media/a1/16THDD/YJY/VDA_Absolute_Distillation/labels/scale_labels.json
+  labels_csv: /media/a1/16THDD/YJY/VDA_Absolute_Distillation/labels/scale_labels.csv
+  plots_root: /media/a1/16THDD/YJY/VDA_Absolute_Distillation/labels/plots
+  runs_root: /media/a1/16THDD/YJY/VDA_Absolute_Distillation/runs
+  vda_repo_root: /home/a1/XZB/Video-Depth-Anything-main
+  vda_checkpoint: /home/a1/XZB/Video-Depth-Anything-main/checkpoints/video_depth_anything_vitl.pth
+  depth_pro_repo_root: /home/a1/XZB/ml-depth-pro
+
+data:
+  allowed_cams:
+    - cam00
+    - cam01
+    - cam04
+    - cam05
+    - cam19
+    - cam20
+  blacklist_cams:
+    - cam02
+  image_ext: .jpg
+  vda_ext: .npy
+  depth_pro_ext: .npz
+  depth_pro_npz_key: depth
+
+depth_mapping:
+  mode: reciprocal_linear
+  reciprocal_eps: 1.0e-6
+
+preprocess:
+  input_size: 518
+  max_res: 1280
+  ensure_multiple_of: 14
+  target_fps: 30
+  image_mean: [0.485, 0.456, 0.406]
+  image_std: [0.229, 0.224, 0.225]
+
+model:
+  encoder: vitl
+  features: 256
+  out_channels: [256, 512, 1024, 1024]
+  global_feature: last_patch_mean
+  freeze_backbone: true
+  freeze_decoder: true
+
+scale_head:
+  input_dim: 1024
+  hidden_dims: [512, 128]
+  dropout: 0.0
+
+train:
+  epochs: 20
+  batch_size: 4
+  num_workers: 0
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  lambda_s: 1.0
+  lambda_t: 1.0
+  train_split: 0.8
+  save_every: 1
+
+inference:
+  clamp_min_depth: 0.0
+  vis_colormap: inferno
