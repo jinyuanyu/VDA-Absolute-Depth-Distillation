@@ -23,22 +23,7 @@
 
 说明：四列分别为 `RGB`、`Depth-Pro`、`VDA 倒数(0-255后映射到Depth-Pro显示范围)`、`多场景训练后的 VDA Absolute`；两行为两个不同场景样本。
 
-### 2.3 端到端流程图
-
-```mermaid
-flowchart LR
-    A["Input RGB (single image)"] --> B["Frozen VDA Encoder/Decoder"]
-    B --> C["Relative depth D_vda"]
-    B --> D["Global feature f"]
-    C --> E["Reciprocal mapping: phi(d)=1/max(d,eps)"]
-    D --> F["Scale MLP Head"]
-    F --> G["Predict (s_hat, t_hat)"]
-    E --> H["Affine fusion: D_abs=s_hat*phi(D_vda)+t_hat"]
-    G --> H
-    H --> I["Absolute depth output"]
-```
-
-### 2.4 实验效果对比（定量快照）
+### 2.3 实验效果对比（定量快照）
 
 ![Experimental Comparison Summary](artifacts/experiments/experimental_comparison_summary.png)
 
